@@ -1,0 +1,79 @@
+application:
+  subdomain: monitor
+  multi_instance: false
+  entries:
+    - id: main
+      title: Status dashboard
+      path: /
+    - id: admin
+      title: Administration
+      path: /admin
+  upstreams:
+    - location: /
+      backend: http://monitor:28080/
+  public_path:
+    - /api/agent/
+    - /agent/
+    - /install.sh
+  injects:
+    - id: monitor-capture-emergency-password
+      auth_required: true
+      on: request
+      when:
+        - /api/auth/login
+      do: |
+        if (String(ctx.request.path || "") !== "/api/auth/login" ||
+            String(ctx.request.method || "").toUpperCase() !== "POST") return;
+        let body;
+        try { body = ctx.body.getJSON(); } catch { return; }
+        if (body && typeof body.password === "string" && body.password.length > 0) {
+          ctx.flow.set("monitor_pending_password", body.password);
+        }
+    - id: monitor-remember-successful-password
+      auth_required: true
+      on: response
+      when:
+        - /api/auth/login
+      do: |
+        if (ctx.status !== 200) return;
+        let body;
+        try { body = ctx.body.getJSON(); } catch { return; }
+        if (!body || body.ok !== true) return;
+        const password = ctx.flow.get("monitor_pending_password");
+        if (typeof password === "string" && password.length > 0) {
+          ctx.persist.set("monitor.emergency_password", password);
+        }
+    - id: monitor-password-autofill
+      auth_required: true
+      when:
+        - /admin
+      do:
+        - src: builtin://simple-inject-password
+          params:
+            password:
+              $persist: monitor.emergency_password
+            passwordSelector: input#password[type="password"]
+            formSelector: form
+            allowPasswordOnly: true
+            requireUser: false
+            onlyFillEmpty: true
+            autoSubmit: false
+services:
+  monitor:
+    # upstream: docker.io/stqfdyr/monitor:1.5.1
+    image: docker.1ms.run/stqfdyr/monitor:1.5.1
+    run_as: "65534:65534"
+    command: --listen 0.0.0.0:28080 --themes /data/themes --site https://{{ .S.AppDomain }}
+    environment:
+      - TZ=Asia/Shanghai
+    binds:
+      - /lzcapp/var/data:/data
+usage: |
+  monitor 服务器探针中心。数据库和主题持久化到 /lzcapp/var/data；以 UID/GID 65534 运行，需要懒猫系统1.6.0或更高。
+  首次启动由上游随机生成应急密码，请在懒猫应用日志中查找 Emergency password 行，勿把密码发到聊天或公开日志。
+  从“管理后台”入口登录；只有成功登录响应才记住应急密码，后续自动填充但不自动提交，防止改密后反复失败锁定。
+  在安全页修改或重置密码后，请手动成功登录一次以更新保存的密码。GitHub OAuth 是可选项，本包不预配第三方凭据。
+  状态页和管理后台默认保留懒猫登录保护；仅 /api/agent/、/agent/ 和 /install.sh 对探针放行，注册与上报仍须通过原生 key/token 校验。
+  这里部署的是 hub，不是被监控机器的 agent；agent 需在目标主机按官方文档安装。目标主机须能访问此应用的 HTTPS 域名，普通浏览器登录并不能替代机器网络可达性。
+  不映射宿主机端口，不挂载宿主机系统目录或 Docker socket；不自动部署、注册或连接任何真实探针。
+  不加文件选择器拦截，不添加 smoke 或容器运行门禁。尚未验证实机运行、登录自动填充、外部节点注册与 WebSocket 上报。

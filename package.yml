@@ -1,0 +1,22 @@
+package: community.lazycat.app.monitor
+version: 1.5.1
+name: monitor
+description: A lightweight server monitoring hub with agent reporting, traffic metrics and status pages.
+min_os_version: "1.6.0"
+homepage: https://github.com/monitor-probe/monitor
+author: monitor-probe
+license: MIT
+permissions:
+  required:
+    - net.internet
+locales:
+  zh:
+    name: monitor
+    description: 轻量级服务器探针面板，支持节点上报、流量统计与状态页。
+    entries.main.title: 状态面板
+    entries.admin.title: 管理后台
+  en:
+    name: monitor
+    description: A lightweight server monitoring hub with agent reporting, traffic metrics and status pages.
+    entries.main.title: Status dashboard
+    entries.admin.title: Administration
