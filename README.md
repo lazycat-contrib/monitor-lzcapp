@@ -20,3 +20,7 @@ This package deploys the hub only. Install the official agent separately on mach
 Build with the reusable LazyCat workflow and versioned Release assets. Both automatic store publishers are disabled; submit only the independently verified Release URL and SHA256 to MiaoMiao community store, never the official store.
 
 Per user instruction, no file-chooser interceptor, smoke job or runtime gate is added. Configuration/JavaScript checks, workflow lint, image digest matching and LPK verification are not proof of device startup, password autofill, node registration or WebSocket reporting. These runtime behaviors remain unverified.
+
+## Community release
+
+Published as MiaoMiao app 659, APPROVED, Dashboard category 89 (System Monitor), version 1.5.1. Build 40875590545 completed successfully with only the reusable LazyCat job. Logs confirm mirror verification of the exact requested image `stqfdyr/monitor:1.5.1`. The 17408-byte versioned LPK was independently downloaded and matched SHA256 `a4cdff4ec3b35e67936d6fec3f3faa25de6b5216a1c337162debce76a038d213`. Store version/category were independently queried after creation. Runtime, first-login, autofill and external-agent behaviors remain unverified.
